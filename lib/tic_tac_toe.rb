@@ -1,89 +1,78 @@
 class TicTacToe
-  def initialize(board = nil)
-    @board = board || Array.new(9, " ")
-  end
 
-#initializes a array with nine positions, all of which are occupied by a blank space
-WIN_COMBINATIONS = [
-    [0,1,2],
-    [3,4,5],
-    [6,7,8],
-    [0,3,6],
-    [1,4,7],
-    [2,5,8],
-    [0,4,8],
-    [2,4,6]
+ def initialize # this is when a new instance of the game is initialized.
+  @board = Array.new(9, " ") # instance variable named board with a new array of 9 empty stings creathing the board.
+ end
+
+ WIN_COMBINATIONS = [ # a nested array filled with the index favlues fo rthe various winning combinations possible.
+    [0, 1, 2], # top horizontal row
+    [3, 4, 5], # middle horizontal row
+    [6, 7, 8], # bottom horizontal row
+    [0, 3, 6], # left vertical row
+    [1, 4, 7], # middle vertical row
+    [2, 5, 8], # right vertical row
+    [0, 4, 8], # diagonal left to right
+    [6, 4, 2]  # diagonal right to left
   ]
-  #these are all the combinations of three that will form a line
 
-  def display_board
-    puts " #{@board[0]} | #{@board[1]} | #{@board[2]} "
-      puts "-----------"
-      puts " #{@board[3]} | #{@board[4]} | #{@board[5]} "
-      puts "-----------"
-      puts " #{@board[6]} | #{@board[7]} | #{@board[8]} "
+ def display_board # a method that will print the current board.
+   puts " #{@board[0]} | #{@board[1]} | #{@board[2]} "
+   puts "-----------"
+   puts " #{@board[3]} | #{@board[4]} | #{@board[5]} "
+   puts "-----------"
+   puts " #{@board[6]} | #{@board[7]} | #{@board[8]} "
+ end
 
-      #this defines the physical shape of the board and where each position of the board array fits into in
-  end
+ def input_to_index(player_input) # a method to pass user input
+    player_input.to_i - 1 # indicex in the array start at 0m -1 to correctly translate the players perspective.
+ end
 
-  def input_to_index
+ def move(index, current_player = "X") #must take in two arguments, the index in the board and the players token
+   @board[index] = current_player
+ end
 
-    user_input.to_i - 1
-    #this tells the program to take whatever position the player entered in and subtract one to determine the space
-    #because the first position in an array is 0, not 1
-  end
+ def position_taken?(index) # will check index values of the #move method. then check to see if that postion is vacent
+   !(@board[index].nil? || @board[index] == " ")
+ end
 
-  def move(position, character = "X")
-    @board[position] = character
-    #this describes putting either an "X" or an "O" into a particular position
-  end
+ def valid_move?(index) # this will check if a move is valid and not already filled with a token
+   index.between?(0,8) && !position_taken?(index)
+ end
 
-  def position_taken?(index)
-    !(@board[index].nil || @board[index] == "")
-    #the position is "taken" if its space in the array is occupied by either an "X" or an "O"
-  end
+ def turn # a single complete turn
+   puts "Please choose a number 1-9:" #asks the user for their move
+   user_input = gets.chomp # recives the user input
+   index = input_to_index(user_input) # this will translate tha input int a index value
+   if valid_move?(index) # if the move is valid,
+     player_token = current_player
+     move(index, player_token) #make the move and display it on the board
+     display_board
+   else
+     turn #ask for input again
+   end
+ end
 
-  def valid_move?(index)
-    index.between?(0,8) && !position_taken?(index)
-    #it is a valid move if the position indicated fits on the board (between 0 and 8)
-    #AND the position_taken method for that space returns as false
-  end
-
-
-  def turn_count
-    number_of_turns = 0
-    @board.each do |space|
-    if space == "X" || space == "O"
-        number_of_turns += 1
-    #the loop starts as zero. with each valid turn (one where an "x" or an "O" can be placed), the counter goes up by one.
-    #it then returns the newly calculated number of turns
+ def turn_count # this method returns the number of turns that have been played based on the @board variable
+   turn = 0
+   @board.each do |index|
+   if index == "X" || index == "O"
+     turn += 1
     end
   end
-  return number_of_turns
-
-  def current_player
-    if turn_count % 2 == 0 ?
-      character = "X"
-    else
-      character = "O"
-    #if the last play was player "X", the next turn is player "O", and vice versa
-    end
+  return turn
   end
 
-  def turn
-    puts "Please enter 1-9:"
-    input = gets.chomp
-    index = input_to_index(input)
-    if valid_move?(index)
-      character = current_player
-      move(index, character)
-      display_board
-    else
-      turn
-    end
+  def current_player # this will use the #turn_count methon to determine if its a "X" or "O" turn
+      num_turns = turn_count
+      if num_turns % 2 == 0
+        player = "X"
+      else
+        player = "O"
+      end
+      return player
   end
 
-  def won?
+  def won? # should return false/nil if there is no win combination, or return the winning combination index as an array if there is a win
     WIN_COMBINATIONS.each {|win_combo|
       index_0 = win_combo[0]
       index_1 = win_combo[1]
@@ -96,58 +85,56 @@ WIN_COMBINATIONS = [
       if position_1 == "X" && position_2 == "X" && position_3 == "X"
         return win_combo
       elsif position_1 == "O" && position_2 == "O" && position_3 == "O"
+        return win_combo
       end
     }
-      return false
+    return false
   end
 
-  def full?
-    @board.all?{|occupied| occupied == "X" || occupied == "O"}
+  def full? # method should return true if every element in the board contains either an "X" or an "O"
+    @board.all? {|index| index == "X" || index == "O"}
   end
 
   def draw?
-    if !(won?) && (full?)
-      return true
+    if !won? && full?
+      return true # returns true if the board is full and has not been won
     else
-      return false
+      return false # false if the board is won, and false if the board is neither won nor full
     end
-    #the game is a draw if it is false that the won? method returns or if the full? method returns
   end
 
-  def over?
+  def over? # returns true if the board has been won or is full
     if won? || draw?
       return true
     else
       return false
-
-    #the game is over if any of the methods won?, full?, or draw? are complete
-  end
+    end
   end
 
-
-  def winner
+  def winner # Given a winning @board
     index = []
-    index = 1?
+    index = won?
     if index == false
-      return nil
+      return nil # the winning method should return x,o that has won the game
     else
       if @board[index[0]] == "X"
         return "X"
       else
         return "O"
-   end
- end
-end
+      end
+    end
+  end
 
   def play
-    until over? == true
+    until over? == true # until the game is over take turns
       turn
     end
-    
-    if won?
+    if won? # if the game was won, congratulate the winner
       puts "Congratulations #{winner}!"
     elsif draw?
-      puts "Cat's Game!"
+      puts "Cat's Game!" #else if the game was a ddraw, tell the player its end in a draw
     end
   end
 end
+
+ 
